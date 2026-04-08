@@ -1,0 +1,20 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+#define BGCOLOR CLITERAL(Color){8, 20, 8, 255}
+#define FGCOLOR CLITERAL(Color){60, 200, 60, 255}
+
+#define TARGET_FPS 60
+
+#define MAX_INPUT_CHARS 64
+#define MAX_OUTPUT_LINE 64
+#define MAX_OUTPUT_LINES 50
+#define MAX_OUTPUT_LINE_LENGHT 100
+
+#define GLOBAL_PADDING 4
+#define INTERN_PADDING 2
+#define FONT_SIZE 22
+#define TITLE_FONT_SIZE FONT_SIZE
+#define LINES_SPACING 4
+
+#endif

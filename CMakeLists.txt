@@ -15,3 +15,9 @@ FetchContent_MakeAvailable(raylib)
 
 add_executable(maint main.c)
 target_link_libraries(maint PRIVATE raylib)
+
+add_custom_command(TARGET maint POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:maint>/assets
+)

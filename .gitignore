@@ -4,3 +4,6 @@ build/
 maint
 
 tags
+.exrc
+
+*.Identifier
