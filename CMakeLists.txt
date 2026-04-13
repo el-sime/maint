@@ -13,7 +13,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(raylib)
 
-add_executable(maint main.c)
+add_executable(maint main.c screen_gameplay.c screen_logo.c)
 target_link_libraries(maint PRIVATE raylib)
 
 add_custom_command(TARGET maint POST_BUILD
