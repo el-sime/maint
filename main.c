@@ -67,6 +67,7 @@ void Init()
 	SetTargetFPS(TARGET_FPS);
 	font = LoadFontEx("assets/cmunss.ttf", FONT_SIZE, 0, 250);
 	renderTarget = LoadRenderTexture(screenWidth, screenHeight);
+
 	isRunning = true;
 	switch (palette)
 	{
@@ -87,6 +88,17 @@ void Update()
 {
 	isRunning = !WindowShouldClose();
 	float deltaTime = GetFrameTime();
+	switch (palette)
+	{
+	case 1:
+		bgColor = BGCOLOR_A;
+		fgColor = FGCOLOR_A;
+		break;
+	default:
+		bgColor = BGCOLOR_G;
+		fgColor = FGCOLOR_G;
+	}
+
 	switch (currentScreen)
 	{
 	case LOGO:
@@ -146,23 +158,6 @@ void Draw()
 					   (Vector2){0, 0}, WHITE);
 	}
 	EndDrawing();
-}
-
-void DrawScreenOverlay()
-{
-	float offset = 0;
-
-	offset = fmodf(GetTime() * SCREEN_ANIMATION_SPEED, (SCREEN_LINES_HEIGHT * 2.f));
-
-	float r = -offset;
-	int stripe = 0;
-	while (r < screenHeight)
-	{
-		Color slColor = (stripe % 2 == 0) ? SCREEN_LINES_BGCOLOR : SCREEN_LINES_FGCOLOR;
-		DrawRectangleRec((Rectangle){0, r, (float)screenWidth, SCREEN_LINES_HEIGHT}, slColor);
-		r += SCREEN_LINES_HEIGHT;
-		stripe++;
-	}
 }
 
 void Cleanup()

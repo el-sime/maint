@@ -2,7 +2,7 @@
 #include "constants.h"
 #include "screens.h"
 
-static const float CRT_TURNON_SPEED = 5.5f; // screen-widths/heights per second
+static const float CRT_TURNON_SPEED = 2.5f; // screen-widths/heights per second
 
 static bool isFinished;
 static int frames = 0;
@@ -28,12 +28,13 @@ void InitLogo(void)
     background.height = backgroundStartSize.y;
     background.x = (float)screenWidth / 2.f - background.width / 2.f;
     background.y = (float)screenHeight / 2.f - background.height / 2.f;
+    bgColor = BLACK;
     return;
 }
 void UpdateLogo(float deltaTime)
 {
     frames++;
-
+    bgColor = BLACK;
     switch (state)
     {
     case INIT:
@@ -58,6 +59,7 @@ void UpdateLogo(float deltaTime)
         background.y = (float)screenHeight / 2.f - background.height / 2.f;
         break;
     case DONE:
+        bgColor = palette == 1 ? BGCOLOR_A : BGCOLOR_G;
         showLogoTime += deltaTime;
         break;
     }

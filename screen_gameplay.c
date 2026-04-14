@@ -1,27 +1,16 @@
+#include <string.h>
+
 #include "raylib.h"
 #include "constants.h"
 #include "screens.h"
-
-typedef enum Context
-{
-    TERM = 0,
-    GATEWAY,
-    AUXPOWER
-} Context;
-
-typedef enum Mode
-{
-    CLI = 0,
-    READER,
-    MESSAGES,
-    FILES
-} Mode;
+#include "modules.h"
 
 //----------------------------------------------
 // Module variables
 //----------------------------------------------
-static Context currentContext = TERM;
-static Context previousContext = TERM;
+ModuleId currentModule;
+InterfaceType currentInterface;
+
 static char input[MAX_INPUT_CHARS + 1] = "\0";
 static char prompt[MAX_INPUT_CHARS + 1] = "\0";
 static char output[MAX_OUTPUT_LINE_LENGHT * MAX_OUTPUT_LINES + 1] = "\0";
@@ -59,14 +48,15 @@ static char host[MAX_HOST_NAME] = "\0";
 //----------------------------------------------
 // Module functions
 //----------------------------------------------
+static void HandleCLIInput();
 static void AppendOutput(const char out[]);
-static void DrawOutputLines();
-static void DrawScreenOverlay();
 static void DrawTextTerm(const char *text, int posX, int posY, int fontSize, Color color);
 static int MeasureTextTerm(const char *text, int fontSize);
 static int LineHeight(int fontSize);
 static void ParseCommand(char input[MAX_INPUT_CHARS + 1]);
 static int CountLines(const char *s);
+
+static void CmdConnect(const char target[]);
 
 void SetStatus(const char *text);
 
@@ -90,58 +80,22 @@ void InitGameplay(void)
 
     maxOutputHeight = screenHeight - outputRecY - statusBarHeight - (FONT_SIZE + INTERN_PADDING * 2);
     maxOutputLines = (int)floor(maxOutputHeight / LineHeight(FONT_SIZE));
+
+    currentModule = TERM;
+    currentInterface = CLI;
+
     strcpy(statusText, "NOT CONNECTED");
-    strcpy(prompt, "mant@mbhost $ ");
+    strcpy(prompt, "mant@term $ ");
 }
 void UpdateGameplay(float deltaTime)
 {
-    switch (palette)
-    {
-    case 1:
-        bgColor = BGCOLOR_A;
-        fgColor = FGCOLOR_A;
-        break;
-    default:
-        bgColor = BGCOLOR_G;
-        fgColor = FGCOLOR_G;
-    }
 
     strcpy(statusText, TextFormat("NOT CONNECTED"));
-
-    int key = GetCharPressed();
-    while (key > 0)
-    {
-        if ((key >= 32) && (key <= 125) && (inputCount < MAX_INPUT_CHARS))
-        {
-            input[inputCount] = (char)key;
-            input[inputCount + 1] = '\0';
-            inputCount++;
-        }
-        else
-        {
-            printf("key pressed%c\n", (char)(key));
-        }
-
-        key = GetCharPressed();
+    if(currentInterface == CLI) {
+        // handle cli input
+        HandleCLIInput();
     }
-    if (IsKeyPressed(KEY_BACKSPACE))
-    {
-        inputCount--;
-        if (inputCount < 0)
-            inputCount = 0;
-        input[inputCount] = '\0';
-    }
-    if (IsKeyPressed(KEY_ENTER))
-    {
-        char cmd[MAX_OUTPUT_LINE_LENGHT + 1] = "\0";
-        strcat(cmd, prompt);
-        strcat(cmd, input);
-        AppendOutput(cmd);
-        ParseCommand(input);
-
-        inputCount = 0;
-        input[inputCount] = '\0';
-    }
+    
 
     outputSize = MeasureTextEx(font, output, (float)FONT_SIZE, (float)(FONT_SIZE / 10));
     promptY = (int)outputSize.y + outputRecY + LINES_SPACING;
@@ -190,22 +144,13 @@ void AppendOutput(const char out[])
     }
 }
 
-void DrawOutputLines()
-{
-    char *outputLine = "asdasd\0";
-    int lh = LineHeight(FONT_SIZE);
-    for (int y = 0; y < maxOutputLines; y++)
-    {
-        DrawText(outputLine, GLOBAL_PADDING, outputRecY + lh * y, FONT_SIZE, fgColor);
-        // DrawLine(1, outputRecY + lh * y, screenWidth - 1, outputRecY + lh * y, LIGHTGRAY);
-    }
-}
-
 void ParseCommand(char input[MAX_INPUT_CHARS + 1])
 {
     if (strlen(input) == 0)
         return;
-    char *verb = strtok(input, " \n");
+    char inputCopy[MAX_INPUT_CHARS + 1] = "\0";
+    strcpy(inputCopy, input);
+    char *verb = strtok(inputCopy, " \n");
     char *noun = strtok(NULL, " \n");
     char cmdOutput[MAX_OUTPUT_LINE_LENGHT + 1] = "\0";
     if (strcmp(verb, "quit") == 0)
@@ -215,6 +160,10 @@ void ParseCommand(char input[MAX_INPUT_CHARS + 1])
     else if (strcmp(verb, "clear") == 0)
     {
         output[0] = '\0';
+    }
+    else if (strcmp(verb, "connect") == 0)
+    {
+        CmdConnect(noun ? noun : "");
     }
     else
     {
@@ -286,4 +235,54 @@ int CountLines(const char *s)
             count++;
     }
     return count;
+}
+
+void CmdConnect(const char target[])
+{
+    char targetName[MAX_HOST_NAME] = "\0";
+    char cmdOutput[MAX_OUTPUT_LINE_LENGHT + 1] = "\0";
+    if (strlen(target) == 0)
+    {
+        snprintf(targetName, sizeof targetName, "%s", "mbgateway");
+    }
+    sprintf(cmdOutput, "Connecting to : %s", targetName);
+    AppendOutput(cmdOutput);
+}
+
+void HandleCLIInput()
+{
+    int key = GetCharPressed();
+    while (key > 0)
+    {
+        if ((key >= 32) && (key <= 125) && (inputCount < MAX_INPUT_CHARS))
+        {
+            input[inputCount] = (char)key;
+            input[inputCount + 1] = '\0';
+            inputCount++;
+        }
+        else
+        {
+            printf("key pressed%c\n", (char)(key));
+        }
+
+        key = GetCharPressed();
+    }
+    if (IsKeyPressed(KEY_BACKSPACE))
+    {
+        inputCount--;
+        if (inputCount < 0)
+            inputCount = 0;
+        input[inputCount] = '\0';
+    }
+    if (IsKeyPressed(KEY_ENTER))
+    {
+        char cmd[MAX_OUTPUT_LINE_LENGHT + 1] = "\0";
+        strcat(cmd, prompt);
+        strcat(cmd, input);
+        AppendOutput(cmd);
+        ParseCommand(input);
+
+        inputCount = 0;
+        input[inputCount] = '\0';
+    }
 }
